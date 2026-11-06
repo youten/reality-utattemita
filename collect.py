@@ -100,14 +100,18 @@ def fetch_playlist_items(api_key: str, playlist_id: str, published_after=None,
         for it in batch:
             raw = (it.get("contentDetails") or {}).get("videoPublishedAt")
             if published_after is not None:
-                # videoPublishedAt が無いエントリ（削除・非公開分など）があるため、
+                # videoPublishedAt が無いエントリ（削除分など）があるため、
                 # None のまま fromisoformat に渡さない（AttributeError で落ちる）
                 try:
                     pub = datetime.fromisoformat(
                         raw.replace("Z", "+00:00")) if raw else None
                 except ValueError:
                     pub = None
-                if pub is None or pub < published_after:
+                if pub is None:
+                    continue  # 日付が取れないエントリは読み飛ばす
+                    # （チャンネル収集で「古い動画に当たった」と誤認して
+                    # 　打ち切ると、その日の新曲を取りこぼすため）
+                if pub < published_after:
                     if stop_when_old:
                         return items
                     continue
