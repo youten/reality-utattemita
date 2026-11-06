@@ -79,26 +79,30 @@ def thumb(video_id: str) -> str:
 
 
 # --- アイコン（インラインSVG） -------------------------------------------
-ICON_YOUTUBE = (
-    '<svg viewBox="0 0 24 24" aria-hidden="true">'
-    '<rect x="1.5" y="5" width="21" height="14" rx="4" fill="#FF0033"/>'
-    '<path d="M10 9.3v5.4L14.8 12z" fill="#fff"/></svg>'
-)
-ICON_X = (
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#fff" d="'
-    "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68"
-    "l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
-    '"/></svg>'
-)
-ICON_REALITY = (
-    '<svg viewBox="0 0 24 24" aria-hidden="true">'
+# アイコン本体はページ冒頭に <symbol> として1回だけ置き（SPRITE）、
+# カード側は <use> で参照する。3,500件超のカードに SVG を複製すると
+# ページが肥大化するため。
+SPRITE = (
+    '<svg width="0" height="0" style="position:absolute" aria-hidden="true">'
     '<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1">'
     '<stop offset="0" stop-color="#C86DD7"/><stop offset="1" stop-color="#7B2FF7"/>'
     "</linearGradient></defs>"
+    '<symbol id="i-yt" viewBox="0 0 24 24">'
+    '<rect x="1.5" y="5" width="21" height="14" rx="4" fill="#FF0033"/>'
+    '<path d="M10 9.3v5.4L14.8 12z" fill="#fff"/></symbol>'
+    '<symbol id="i-x" viewBox="0 0 24 24"><path fill="#fff" d="'
+    "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68"
+    "l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
+    '"/></symbol>'
+    '<symbol id="i-re" viewBox="0 0 24 24">'
     '<rect width="24" height="24" rx="6" fill="url(#rg)"/>'
     '<text x="12" y="17.2" font-size="13" font-weight="700" fill="#fff" '
-    'text-anchor="middle" font-family="Arial, sans-serif">R</text></svg>'
+    'text-anchor="middle" font-family="Arial, sans-serif">R</text></symbol>'
+    "</svg>"
 )
+ICON_YOUTUBE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-yt"/></svg>'
+ICON_X = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-x"/></svg>'
+ICON_REALITY = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-re"/></svg>'
 
 
 def icon_link(url: str, icon: str, label: str) -> str:
@@ -234,6 +238,7 @@ def render_index(merged: list[dict]) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>#{esc(TAG)}</title><style>{PAGE_CSS}</style></head>
 <body>
+{SPRITE}
 <header>
 <h1><a href="{esc(HASHTAG_URL)}" target="_blank" rel="noopener">#{esc(TAG)}</a></h1>
 <div class="controls"><input id="q" type="search" placeholder="タイトル・名前・クレジット・メモで検索">
