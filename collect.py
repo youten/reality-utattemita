@@ -70,6 +70,13 @@ def to_uploads_playlist_id(channel_id: str) -> str | None:
     return "UU" + s[2:] if s.startswith("UC") else None
 
 
+def resolve_channel_id(api_key: str, handle: str) -> str | None:
+    """@ハンドルからチャンネルID（UC...）を引く。GAS版と同じ Channels.list(forHandle)。"""
+    data = yt_get(api_key, "channels", {"part": "id", "forHandle": handle})
+    items = data.get("items") or []
+    return items[0].get("id") if items else None
+
+
 def yt_get(api_key: str, path: str, params: dict) -> dict:
     """YouTube Data API v3 を1回呼ぶ。quota超過は QuotaExceeded にする。"""
     q = dict(params, key=api_key)
@@ -326,7 +333,16 @@ def main() -> int:
                 playlist_id = artist["id"]
                 stop_old = False
             else:
-                playlist_id = to_uploads_playlist_id(artist["id"])
+                channel_id = artist["id"]
+                if channel_id.startswith("@"):
+                    # ハンドル登録のチャンネルはIDを引いてから変換する
+                    try:
+                        channel_id = resolve_channel_id(api_key, channel_id) or ""
+                    except QuotaExceeded:
+                        print("quota超過を検知したため中断します。", file=sys.stderr)
+                        quota_stop = True
+                        break
+                playlist_id = to_uploads_playlist_id(channel_id)
                 stop_old = True
                 if playlist_id is None:
                     print(f"  skip: {artist['id']} はUC始まりでないため変換不可", file=sys.stderr)
@@ -432,7 +448,8 @@ def main() -> int:
         json.dump(merged, f, ensure_ascii=False, indent=1)
         f.write("\n")
 
-    review_path = DATA / f"review_{today}.csv"
+    suffix = "_backfill" if (args.backfill or args.only) else ""
+    review_path = DATA / f"review_{today}{suffix}.csv"
     with open(review_path, "w", encoding="utf-8", newline="") as f:
         w = csv.writer(f)
         w.writerow(["video_id", "title_hint", "artist", "publish_date", "source",

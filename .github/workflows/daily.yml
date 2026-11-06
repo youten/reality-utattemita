@@ -19,6 +19,10 @@ on:
         required: false
         type: boolean
         default: false
+      only:
+        description: "対象を絞る（artists.csv の id をカンマ区切り。backfill と併用）"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -40,10 +44,14 @@ jobs:
             exit 0
           fi
           if [ "${{ inputs.backfill }}" = "true" ]; then
-            python3 collect.py --backfill
+            ARGS="--backfill"
           else
-            python3 collect.py --days "${{ inputs.days || '14' }}"
+            ARGS="--days ${{ inputs.days || '14' }}"
           fi
+          if [ -n "${{ inputs.only }}" ]; then
+            ARGS="$ARGS --only ${{ inputs.only }}"
+          fi
+          python3 collect.py $ARGS
       - name: Build HTML
         run: python3 build.py
       - name: Commit if changed
