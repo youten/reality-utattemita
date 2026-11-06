@@ -100,9 +100,12 @@ def fetch_playlist_items(api_key: str, playlist_id: str, published_after=None,
         for it in batch:
             raw = (it.get("contentDetails") or {}).get("videoPublishedAt")
             if published_after is not None:
+                # videoPublishedAt が無いエントリ（削除・非公開分など）があるため、
+                # None のまま fromisoformat に渡さない（AttributeError で落ちる）
                 try:
-                    pub = datetime.fromisoformat(raw.replace("Z", "+00:00"))
-                except (TypeError, ValueError):
+                    pub = datetime.fromisoformat(
+                        raw.replace("Z", "+00:00")) if raw else None
+                except ValueError:
                     pub = None
                 if pub is None or pub < published_after:
                     if stop_when_old:
@@ -346,9 +349,9 @@ def main() -> int:
                     continue
                 pub_raw = (it.get("contentDetails") or {}).get("videoPublishedAt", "")
                 try:
-                    pub = datetime.fromisoformat(pub_raw.replace("Z", "+00:00"))
+                    pub = datetime.fromisoformat((pub_raw or "").replace("Z", "+00:00"))
                     pub_date = pub.strftime("%Y/%m/%d")
-                except (TypeError, ValueError):
+                except ValueError:
                     pub_date = ""
                 meta = dict(details.get(vid, {}), title=title)
                 ann = annotations.get(vid, {})
