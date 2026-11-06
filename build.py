@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """#REALITY歌ってみたYouTubeリスト HTML生成スクリプト。
 
-data/musics.json（機械が集めた事実）に data/annotations.csv（人間の付箋）を
-合成して、GitHub Pages 用の docs/index.html を作る。
+data/annotations.csv（台帳：載っている曲だけが一覧に出る。人間が
+original / provided / credit / note を書き込む）に、data/musics.json
+（機械が集めた事実：タイトル・日付・リンク）を合わせて、
+GitHub Pages 用の docs/index.html を作る。
 サムネイルは YouTube の画像URLを直接表示するため、画像の保管は不要。
 
 表示仕様（2026-11-06 ようてん指定）:
@@ -29,14 +31,12 @@ TAG = "REALITY歌ってみたYouTubeリスト"
 HASHTAG_URL = "https://x.com/hashtag/" + quote(TAG)
 
 
-def load_annotations(path: Path) -> dict:
-    out = {}
-    if path.exists():
-        with open(path, encoding="utf-8", newline="") as f:
-            for row in csv.DictReader(f):
-                if row.get("video_id"):
-                    out[row["video_id"]] = row
-    return out
+def load_ledger(path: Path) -> list[dict]:
+    """台帳（annotations.csv）を並び順どおりに読む。"""
+    if not path.exists():
+        return []
+    with open(path, encoding="utf-8", newline="") as f:
+        return [r for r in csv.DictReader(f) if r.get("video_id")]
 
 
 def unescape_note(value: str) -> str:
@@ -44,26 +44,37 @@ def unescape_note(value: str) -> str:
     return (value or "").replace("\\n", "\n")
 
 
-def merge(musics: list[dict], annotations: dict) -> list[dict]:
-    """付箋を合成する。original / provided / credit / note は付箋が正。"""
-    merged = []
-    for m in musics:
-        ann = annotations.get(m.get("video_id", ""), {})
-        item = dict(m)
-        if ann.get("original") == "1":
+def build_items(ledger: list[dict], musics: list[dict]) -> list[dict]:
+    """台帳の各行に musics.json の事実（タイトル・日付・リンク）を合わせる。
+
+    original / provided / credit / note は台帳（人間）が正。
+    事実が無い行（手で足した行など）は台帳の項目だけで描く。
+    """
+    by_id = {m.get("video_id"): m for m in musics}
+    items, seen = [], set()
+    for row in ledger:
+        vid = row.get("video_id", "")
+        if not vid or vid in seen:
+            continue
+        seen.add(vid)
+        fact = by_id.get(vid, {})
+        item = dict(fact)
+        item["video_id"] = vid
+        item["title"] = fact.get("title") or row.get("title", "")
+        item["name"] = fact.get("name") or row.get("artist", "")
+        item["publish_date"] = fact.get("publish_date") or row.get("publish_date", "")
+        if row.get("original") == "1":
             item["original"] = "1"
-        if ann.get("provided") == "1":
+        else:
+            item.pop("original", None)
+        if row.get("provided") == "1":
             item["provided"] = "1"
-        if ann.get("credit"):
-            item["credit"] = ann["credit"]
-        if ann.get("note"):
-            item["note"] = unescape_note(ann["note"])
-        elif item.get("note"):
-            item["note"] = unescape_note(item["note"])
-        # 楽曲提供で musics に未収録の曲（追跡対象外アーティストへの提供）は
-        # 一覧には出さないが、件数の辻褄が合うよう呼び出し側で数える。
-        merged.append(item)
-    return merged
+        else:
+            item.pop("provided", None)
+        item["credit"] = row.get("credit", "")
+        item["note"] = unescape_note(row.get("note", ""))
+        items.append(item)
+    return items
 
 
 def esc(s) -> str:
@@ -265,24 +276,14 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
 
     musics = json.load(open(DATA / "musics.json", encoding="utf-8"))
-    annotations = load_annotations(DATA / "annotations.csv")
-    merged = merge(musics, annotations)
-    merged.sort(key=lambda m: (m.get("publish_date") or ""), reverse=True)
-    # 念のため video_id で重複除去（collect.py 側でもキー管理しているが、
-    # 移行データには重複が25件残っていたため。新しい方を残す）
-    seen, deduped = set(), []
-    for m in merged:
-        if m.get("video_id") in seen:
-            continue
-        seen.add(m.get("video_id"))
-        deduped.append(m)
-    merged = deduped
+    ledger = load_ledger(DATA / "annotations.csv")
+    items = build_items(ledger, musics)
 
-    (out / "index.html").write_text(render_index(merged), encoding="utf-8")
+    (out / "index.html").write_text(render_index(items), encoding="utf-8")
 
-    n_orig = sum(1 for m in merged if m.get("original") == "1")
-    n_prov = sum(1 for m in merged if m.get("provided") == "1")
-    print(f"index.html: {len(merged)}件（オリジナル {n_orig}件／楽曲提供 {n_prov}件）")
+    n_orig = sum(1 for m in items if m.get("original") == "1")
+    n_prov = sum(1 for m in items if m.get("provided") == "1")
+    print(f"index.html: {len(items)}件（オリジナル {n_orig}件／楽曲提供 {n_prov}件）")
     print(f"出力先: {out}")
     return 0
 

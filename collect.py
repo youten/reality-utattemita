@@ -9,12 +9,16 @@ Videos.list で補足情報（長さ・カテゴリ・タグ・配信状態）�
 あわせて、同一アーティストで同一タイトル（表記ゆれを吸収した照合）の
 登録済み曲がある新規動画は「重複候補」として自動採用せず要確認に回す
 （再アップロードや Shorts 版の二重登録防止。pomme 検証 2026-11-06 の結論）。
-付箋 decision=include の動画は人間の判断を優先し、重複候補の対象にしない。
 
-ファイルの所有権（DESIGN.md「付箋」方式）:
-  - 人間が触る: data/artists.csv / data/annotations.csv（読むだけ。書かない）
+ファイルの所有権（DESIGN.md「台帳」方式、2026-11-06 変更）:
+  - 人間が触る: data/artists.csv（収集先の登録簿）、
+                data/annotations.csv（一覧の台帳。collect は読まない・書かない）
   - 機械が触る: data/musics.json（video_id をキーに更新）、
-                data/review_YYYY-MM-DD.csv（要確認・保留の一覧）
+                data/review_YYYY-MM-DD.csv（要確認。decision 欄つき）、
+                data/candidates.json（要確認の曲情報の控え。昇格用）、
+                data/excluded.json（恒久除外の video_id 一覧。読むだけ）
+  - 恒久除外（excluded.json）と保留中（candidates.json のキー）の動画は
+    再掲しない。review の判断取り込みと台帳の整備は sync.py の担当。
 
 使い方:
   YOUTUBE_API_KEY=... python3 collect.py [--days 14] [--backfill]
@@ -161,16 +165,18 @@ def load_artists(path: Path) -> list[dict]:
         return [r for r in csv.DictReader(f) if (r.get("id") or "").strip()]
 
 
-def load_annotations(path: Path) -> dict:
-    """video_id -> 付箋行。decision（include/exclude）が最優先される。"""
-    out = {}
+def load_id_set(path: Path) -> set:
+    """JSON のリスト（video_id の配列）を読む。無ければ空集合。"""
     if not path.exists():
-        return out
-    with open(path, encoding="utf-8", newline="") as f:
-        for row in csv.DictReader(f):
-            if row.get("video_id"):
-                out[row["video_id"]] = row
-    return out
+        return set()
+    return set(json.load(open(path, encoding="utf-8")))
+
+
+def load_candidates(path: Path) -> dict:
+    """要確認の曲情報の控え（video_id -> レコード）を読む。"""
+    if not path.exists():
+        return {}
+    return json.load(open(path, encoding="utf-8"))
 
 
 def load_musics(path: Path) -> list[dict]:
@@ -313,7 +319,9 @@ def main() -> int:
         print("YOUTUBE_API_KEY が設定されていません。", file=sys.stderr)
         return 2
 
-    annotations = load_annotations(DATA / "annotations.csv")
+    excluded_ids = load_id_set(DATA / "excluded.json")
+    candidates = load_candidates(DATA / "candidates.json")
+    pending_ids = set(candidates)
     musics = load_musics(DATA / "musics.json")
     by_id = {m["video_id"]: m for m in musics if m.get("video_id")}
     registered = build_registered_index(musics)  # 重複候補の照合用
@@ -323,6 +331,7 @@ def main() -> int:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     adopted, review_rows, held, skipped = [], [], [], 0
+    suppressed, review_entries = 0, []
     quota_stop = False
     try:
         for artist in artists:
@@ -374,22 +383,19 @@ def main() -> int:
                 except ValueError:
                     pub_date = ""
                 meta = dict(details.get(vid, {}), title=title)
-                ann = annotations.get(vid, {})
-                decision = (ann.get("decision") or "").strip().lower()
 
                 if meta.get("privacy_status") in ("private", "unlisted"):
                     continue  # 非公開・限定公開は落とす。限定公開はサムネイルが
                     # あるため GAS 版では混入していたが、API では privacyStatus で判別できる
+                if vid in excluded_ids:
+                    suppressed += 1
+                    continue  # 恒久除外（review で exclude 済み／台帳から削除済み）
                 if meta.get("live_broadcast_content") in ("upcoming", "live"):
                     held.append((vid, title, artist.get("name", ""), pub_date,
                                  meta["live_broadcast_content"]))
                     continue  # プレミア公開前・配信中は保留。公開後に拾い直す
                 orig_flag = ""
-                if decision == "include":
-                    verdict, reason = "adopt", "付箋 decision=include"
-                elif decision == "exclude":
-                    verdict, reason = "exclude", "付箋 decision=exclude"
-                elif kind == "playlist":
+                if kind == "playlist":
                     # プレイリスト経由は本人の歌ってみたプレイリスト中心のため原則採用
                     verdict, reason = "adopt", "プレイリスト経由（原則採用）"
                 else:
@@ -398,8 +404,8 @@ def main() -> int:
                     orig_flag = "1" if r.get("original_candidate") else ""
                 # 重複候補チェック：同一アーティストで同一タイトルの登録済み曲が
                 # ある新規動画は、再アップロード等の可能性があるため要確認へ。
-                # 付箋 include（人間の判断）と、既に登録済みの同一動画は対象外。
-                if verdict == "adopt" and decision != "include" and vid not in by_id:
+                # 既に登録済みの同一動画は対象外。
+                if verdict == "adopt" and vid not in by_id:
                     dup = find_duplicate(registered, artist.get("name", ""), title)
                     if dup is not None:
                         verdict = "review"
@@ -424,8 +430,12 @@ def main() -> int:
                     registered.setdefault(entry["name"], []).append(
                         (title_keys(title), entry))
                 elif verdict == "review":
-                    review_rows.append((vid, title, artist.get("name", ""), pub_date,
-                                        kind, reason, orig_flag))
+                    if vid in pending_ids:
+                        pass  # すでに要確認に出ている（再掲しない）
+                    else:
+                        review_rows.append((vid, title, artist.get("name", ""), pub_date,
+                                            kind, reason, orig_flag))
+                        review_entries.append(entry)  # 昇格用に曲情報の控えを残す
                 # exclude は musics に入れない
     except QuotaExceeded:
         quota_stop = True
@@ -453,19 +463,29 @@ def main() -> int:
     # 判断不要で、公開まで毎日のファイルに出続けてノイズになるため、CSV には
     # 混ぜず実行ログにのみ出す（2026-11-06 ようてんの指摘で変更）。
     # 要確認が無い日はファイル自体を作らない。
+    # decision 欄は人間が include / exclude を書き込むための空欄。
+    # include と書かれた行は sync.py が台帳へ昇格させる（曲情報の控えは
+    # candidates.json に残すため、昇格時に API は不要）。
     review_path = None
     if review_rows:
         review_path = DATA / f"review_{today}{suffix}.csv"
         with open(review_path, "w", encoding="utf-8", newline="") as f:
             w = csv.writer(f)
             w.writerow(["video_id", "title_hint", "artist", "publish_date", "source",
-                        "verdict", "reason", "original_candidate", "suggested_annotation_row"])
+                        "verdict", "reason", "original_candidate", "decision"])
             for vid, title, name, pub, kind, reason, orig in review_rows:
-                ann_row = ",".join([vid, title.replace(",", "、"), orig, "", "", "", ""])
-                w.writerow([vid, title, name, pub, kind, "review", reason, orig, ann_row])
+                w.writerow([vid, title, name, pub, kind, "review", reason, orig, ""])
+    if review_entries:
+        for e in review_entries:
+            candidates[e["video_id"]] = e
+        with open(DATA / "candidates.json", "w", encoding="utf-8") as f:
+            json.dump(candidates, f, ensure_ascii=False, indent=1, sort_keys=True)
+            f.write("\n")
 
     print(f"採用（新規追加）: {added}件（今回の取得で採用判定 {len(adopted)}件）")
     print(f"要確認: {len(review_rows)}件、保留（プレミア等）: {len(held)}件")
+    if suppressed:
+        print(f"恒久除外のため読み飛ばし: {suppressed}件")
     for vid, title, name, pub, status in held:
         print(f"  保留: {title}（{name}、{status}）")
     print(f"musics.json: {len(merged)}件に更新")

@@ -1,0 +1,35 @@
+name: sync-ledger
+
+# 手動の台帳同期: review の判断（include / exclude）の取り込みと
+# ページの再生成だけを行う。収集はしない（APIキー不要・数十秒で終わる）。
+# 日次収集にも同じ同期が組み込まれているので、急がなければ押さなくてよい。
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: 台帳同期（昇格・除外・整備）
+        run: python3 sync.py
+      - name: ページ生成
+        run: python3 build.py
+      - name: 変更があればコミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data docs
+          if git diff --cached --quiet; then
+            echo "変更なし"
+          else
+            git commit -m "sync ledger"
+            git push
+          fi

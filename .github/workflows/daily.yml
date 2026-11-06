@@ -1,5 +1,8 @@
-# #REALITY歌ってみたYouTubeリスト 日次収集＋HTML生成
-# 毎日22:00 JST に collect.py → build.py を実行し、変化があれば自動commitする。
+# #REALITY歌ってみたYouTubeリスト 日次収集＋台帳同期＋HTML生成
+# 毎日22:00 JST に sync.py → collect.py → sync.py → build.py を実行し、
+# 変化があれば自動commitする。
+# 台帳同期（sync.py）は review の判断（include / exclude）の取り込みと
+# 台帳（annotations.csv）の整備。APIキー不要で、収集前後どちらでも回る。
 # 手動実行（workflow_dispatch）では --days / --backfill を指定できる。
 # 必要な Secrets: YOUTUBE_API_KEY（YouTube Data API v3 のAPIキー）
 # 書き込みには Actions 標準の GITHUB_TOKEN を使う（PATは不要）。
@@ -35,6 +38,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Sync ledger (before collect)
+        run: python3 sync.py
       - name: Collect recent videos
         env:
           YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
@@ -52,13 +57,14 @@ jobs:
             ARGS="$ARGS --only ${{ inputs.only }}"
           fi
           python3 collect.py $ARGS
+      - name: Sync ledger (after collect)
+        run: python3 sync.py
       - name: Build HTML
         run: python3 build.py
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/musics.json docs/
-          for f in data/review_*.csv; do [ -e "$f" ] && git add "$f"; done
+          git add data docs
           git diff --cached --quiet || git commit -m "daily collect: $(date -u +%Y-%m-%d)"
           git push
