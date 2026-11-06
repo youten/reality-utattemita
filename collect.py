@@ -4,6 +4,8 @@
 GAS版（gas_original.gs）の移植：PlaylistItems.list 中心で最近14日分を集め、
 Videos.list で補足情報（長さ・カテゴリ・タグ・配信状態）を取って判定する。
 判定ルールは classify.py（v1.3 + メタデータ併用）。
+非公開・限定公開（unlisted）の動画は収集対象から外し、プレミア公開前と
+配信中は「保留」として今回は入れず、公開された後の収集で拾い直す。
 あわせて、同一アーティストで同一タイトル（表記ゆれを吸収した照合）の
 登録済み曲がある新規動画は「重複候補」として自動採用せず要確認に回す
 （再アップロードや Shorts 版の二重登録防止。pomme 検証 2026-11-06 の結論）。
@@ -352,8 +354,9 @@ def main() -> int:
                 ann = annotations.get(vid, {})
                 decision = (ann.get("decision") or "").strip().lower()
 
-                if meta.get("privacy_status") == "private":
-                    continue  # 非公開は GAS版と同じく落とす
+                if meta.get("privacy_status") in ("private", "unlisted"):
+                    continue  # 非公開・限定公開は落とす。限定公開はサムネイルが
+                    # あるため GAS 版では混入していたが、API では privacyStatus で判別できる
                 if meta.get("live_broadcast_content") in ("upcoming", "live"):
                     held.append((vid, title, artist.get("name", ""), pub_date,
                                  meta["live_broadcast_content"]))
