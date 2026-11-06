@@ -45,13 +45,13 @@
    - original候補（MV系表記がありカバー語が無い等）も要確認リストに併記し、チェックで確定できるようにする
    - `annotations.csv` の decision があれば最優先
 4. 動画IDで重複排除して `musics.json` を更新 → 付箋を合成してHTML再生成 → 自動commit → GitHub Pages公開
-5. 「楽曲提供」ページは annotations の provided=1 から生成。musics に無い動画（追跡対象外アーティストへの提供曲）は video_id から個別に情報を取得して載せる
+5. 「楽曲提供」は独立ページを持たず、一覧のフィルタとバッジで表示する（2026-11-06 のデザイン変更で provided.html は廃止）。musics に無い提供曲（追跡対象外アーティストへの提供）はページには出ないが、付箋には残る
 
 ## 運用手順
 
 - **日次更新**：Actionsのcron（＋手動実行）で自動。要確認が出たら review を見て、必要なら annotations.csv に decision や original を追記
 - **新規アーティスト追加**：artists.csv に行を追加し、backfill実行（全期間を収集→判定→要確認で曲だけ残す）。現行のmacroシート運用の置き換え
-- **楽曲提供の追加**：annotations.csv に provided=1 と credit を書く（対象が収集済みでなくてもよい）
+- **楽曲提供の追加**：annotations.csv に provided=1 と credit を書く（一覧に出るのは musics 収録済みの曲のみ）
 
 ## 移行データの状態（2026-11-06 時点、~/workspace/reality-utattemita/data/）
 

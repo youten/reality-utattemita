@@ -5,7 +5,7 @@ REALITYユーザーの歌ってみた活動を追う公開リスト。
 毎日の収集は GitHub Actions で自動実行し、結果を GitHub Pages で公開する。
 
 - 一覧：`docs/index.html`（musics 全件・新しい順、検索・絞り込み付き）
-- 楽曲提供：`docs/provided.html`（annotations.csv の provided=1 から生成）
+- 楽曲提供：独立ページは持たず、一覧の「楽曲提供」フィルタとバッジで表示（annotations.csv の provided=1）
 
 ## ファイル構成と所有権（「付箋」方式）
 
