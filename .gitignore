@@ -1,0 +1,4 @@
+# ローカルの作業用データ（GitHub には上げない）
+data_raw/
+__pycache__/
+*.pyc
