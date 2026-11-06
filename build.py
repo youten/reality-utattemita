@@ -85,7 +85,8 @@ def thumb(video_id: str) -> str:
 SPRITE = (
     '<svg width="0" height="0" style="position:absolute" aria-hidden="true">'
     '<defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1">'
-    '<stop offset="0" stop-color="#C86DD7"/><stop offset="1" stop-color="#7B2FF7"/>'
+    '<stop offset="0" stop-color="#2EC5F6"/><stop offset=".45" stop-color="#7B61FF"/>'
+    '<stop offset="1" stop-color="#F542A7"/>'
     "</linearGradient></defs>"
     '<symbol id="i-yt" viewBox="0 0 24 24">'
     '<rect x="1.5" y="5" width="21" height="14" rx="4" fill="#FF0033"/>'
@@ -95,9 +96,9 @@ SPRITE = (
     "l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"
     '"/></symbol>'
     '<symbol id="i-re" viewBox="0 0 24 24">'
-    '<rect width="24" height="24" rx="6" fill="url(#rg)"/>'
-    '<text x="12" y="17.2" font-size="13" font-weight="700" fill="#fff" '
-    'text-anchor="middle" font-family="Arial, sans-serif">R</text></symbol>'
+    '<rect x="5.4" y="5.4" width="13.2" height="13.2" rx="4" '
+    'transform="rotate(45 12 12)" fill="none" stroke="url(#rg)" '
+    'stroke-width="3.1"/></symbol>'
     "</svg>"
 )
 ICON_YOUTUBE = '<svg viewBox="0 0 24 24" aria-hidden="true"><use href="#i-yt"/></svg>'
