@@ -17,7 +17,7 @@ REALITYユーザーの歌ってみた活動を追う公開リスト。
 | `data/artists.csv` | 人間 | 収集先の登録簿（channel ID / playlist ID、187名・213件） |
 | `data/annotations.csv` | 人間 | 動画への付箋。`video_id, title_hint, original, provided, credit, note, decision` |
 | `data/musics.json` | 機械 | APIで集めた事実のみ。video_id をキーに管理（重複なし） |
-| `data/review_YYYY-MM-DD.csv` | 機械 | その日の要確認・保留の一覧。annotations.csv へ貼れる行を併記 |
+| `data/review_YYYY-MM-DD.csv` | 機械 | その日の要確認の一覧（判断が要るものだけ。保留は実行ログにのみ出る）。annotations.csv へ貼れる行を併記 |
 | `docs/*.html` | 機械 | 生成物 |
 | `collect.py` / `build.py` / `classify.py` | — | 収集・HTML生成・判定ルール（v1.3） |
 

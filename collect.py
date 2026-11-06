@@ -449,22 +449,30 @@ def main() -> int:
         f.write("\n")
 
     suffix = "_backfill" if (args.backfill or args.only) else ""
-    review_path = DATA / f"review_{today}{suffix}.csv"
-    with open(review_path, "w", encoding="utf-8", newline="") as f:
-        w = csv.writer(f)
-        w.writerow(["video_id", "title_hint", "artist", "publish_date", "source",
-                    "verdict", "reason", "original_candidate", "suggested_annotation_row"])
-        for vid, title, name, pub, kind, reason, orig in review_rows:
-            ann_row = ",".join([vid, title.replace(",", "、"), orig, "", "", "", ""])
-            w.writerow([vid, title, name, pub, kind, "review", reason, orig, ann_row])
-        for vid, title, name, pub, status in held:
-            w.writerow([vid, title, name, pub, "channel", "hold",
-                        f"プレミア／配信中（{status}）のため保留", "", ""])
+    # 要確認ファイルは「人間の判断が要るもの」だけを書く。保留（プレミア等）は
+    # 判断不要で、公開まで毎日のファイルに出続けてノイズになるため、CSV には
+    # 混ぜず実行ログにのみ出す（2026-11-06 ようてんの指摘で変更）。
+    # 要確認が無い日はファイル自体を作らない。
+    review_path = None
+    if review_rows:
+        review_path = DATA / f"review_{today}{suffix}.csv"
+        with open(review_path, "w", encoding="utf-8", newline="") as f:
+            w = csv.writer(f)
+            w.writerow(["video_id", "title_hint", "artist", "publish_date", "source",
+                        "verdict", "reason", "original_candidate", "suggested_annotation_row"])
+            for vid, title, name, pub, kind, reason, orig in review_rows:
+                ann_row = ",".join([vid, title.replace(",", "、"), orig, "", "", "", ""])
+                w.writerow([vid, title, name, pub, kind, "review", reason, orig, ann_row])
 
     print(f"採用（新規追加）: {added}件（今回の取得で採用判定 {len(adopted)}件）")
     print(f"要確認: {len(review_rows)}件、保留（プレミア等）: {len(held)}件")
+    for vid, title, name, pub, status in held:
+        print(f"  保留: {title}（{name}、{status}）")
     print(f"musics.json: {len(merged)}件に更新")
-    print(f"要確認リスト: {review_path}")
+    if review_path is not None:
+        print(f"要確認リスト: {review_path}")
+    else:
+        print("要確認はありませんでした。")
     if quota_stop:
         print("※ quota超過で中断したため、未処理の対象が残っています。", file=sys.stderr)
         return 3
