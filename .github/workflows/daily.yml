@@ -10,7 +10,7 @@ name: daily-collect
 
 on:
   schedule:
-    - cron: "0 13 * * *"  # 22:00 JST
+    - cron: "17 13 * * *"  # 22:17 JST
   workflow_dispatch:
     inputs:
       days:
