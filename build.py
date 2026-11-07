@@ -215,8 +215,15 @@ white-space:nowrap}
 .ic svg{width:20px;height:20px;display:block}
 .memo{font-size:12.5px;line-height:1.55;color:#c9c9d4;background:rgba(255,255,255,.04);
 border-left:3px solid var(--accent);border-radius:6px;padding:8px 10px}
-footer{max-width:1280px;margin:0 auto;padding:8px 20px 28px;color:var(--muted);font-size:12.5px}
-footer a{color:var(--muted)}
+.info-btn{background:none;border:0;padding:0;margin-left:9px;cursor:pointer;color:var(--muted);vertical-align:-3px}
+.info-btn:hover{color:var(--accent)}
+.info-btn svg{display:block;width:17px;height:17px}
+dialog#about{background:#171a21;color:var(--text);border:1px solid #2a2f3a;border-radius:12px;max-width:min(92vw,560px);padding:22px 24px}
+dialog#about::backdrop{background:rgba(0,0,0,.62)}
+dialog#about p{margin:0 0 12px;line-height:1.75;font-size:14.5px}
+dialog#about a{color:var(--accent)}
+.about-close{display:block;margin:16px 0 0 auto;background:#232833;color:var(--text);border:1px solid #2a2f3a;border-radius:8px;padding:7px 18px;cursor:pointer;font-size:14px}
+.about-close:hover{border-color:var(--accent)}
 """
 
 PAGE_JS = """
@@ -241,6 +248,10 @@ for(const b of document.querySelectorAll('[data-f]')){
   });
 }
 apply();
+const dlg=document.getElementById('about');
+document.getElementById('about-open').addEventListener('click',()=>dlg.showModal());
+document.getElementById('about-close').addEventListener('click',()=>dlg.close());
+dlg.addEventListener('click',e=>{if(e.target===dlg)dlg.close()});
 """
 
 
@@ -267,7 +278,7 @@ def render_index(merged: list[dict]) -> str:
 <body>
 {SPRITE}
 <header>
-<h1><img class="logo" src="favicon.svg" alt=""><a href="{esc(HASHTAG_URL)}" target="_blank" rel="noopener">#{esc(TAG)}</a></h1>
+<h1><img class="logo" src="favicon.svg" alt=""><a href="{esc(HASHTAG_URL)}" target="_blank" rel="noopener">#{esc(TAG)}</a><button class="info-btn" type="button" id="about-open" aria-label="このリストについて"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="7.4" r="1.4" fill="currentColor"/><path d="M12 11v6" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/></svg></button></h1>
 <div class="controls"><input id="q" type="search" placeholder="タイトル・名前・クレジット・メモで検索">
 <button data-f="all" class="on">すべて</button>
 <button data-f="orig">オリジナル</button>
@@ -277,8 +288,13 @@ def render_index(merged: list[dict]) -> str:
 <main><div class="grid">
 {cards}
 </div></main>
-<footer>REALITYで歌ってみた活動を継続している方の新曲を追うリストです。
-お問い合わせは <a href="https://x.com/youten_redo" target="_blank" rel="noopener">X @youten_redo</a> へ。</footer>
+<dialog id="about">
+<p>REALITYユーザの歌ってみた活動をしてる方のYouTube楽曲リストです。</p>
+<p>対象の追加については <a href="https://x.com/youten_redo" target="_blank" rel="noopener">@youten_redo</a> までお気軽に連絡ください。</p>
+<p>歌みた活動におけるchの新曲をヲチする目的で作っているため、単発の記念歌みたなど、楽曲単位の追加はご遠慮させていただいてるケースがございます、悪しからずご了承願います。</p>
+<p>間違いや更新漏れなどありましたら申し訳ありません、同様に連絡いただけると助かります。</p>
+<button class="about-close" type="button" id="about-close">閉じる</button>
+</dialog>
 <script>{PAGE_JS}</script></body></html>
 """
 
