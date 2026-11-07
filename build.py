@@ -174,6 +174,7 @@ background:var(--bg);color:var(--text);margin:0}
 header{position:sticky;top:0;z-index:10;background:rgba(13,13,18,.88);
 backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 20px 10px}
 h1{font-size:21px;margin:0 0 10px;letter-spacing:.02em}
+h1 .logo{width:30px;height:30px;vertical-align:-8px;margin-right:9px}
 h1 a{color:var(--text);text-decoration:none}
 h1 a:hover{color:var(--accent)}
 .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -259,11 +260,14 @@ def render_index(merged: list[dict]) -> str:
 <meta name="twitter:title" content="#{esc(TAG)}">
 <meta name="twitter:description" content="REALITYユーザーの歌ってみたYouTube動画を集めたリスト">
 <meta name="twitter:image" content="https://youten.github.io/reality-utattemita/ogp.png">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <title>#{esc(TAG)}</title><style>{PAGE_CSS}</style></head>
 <body>
 {SPRITE}
 <header>
-<h1><a href="{esc(HASHTAG_URL)}" target="_blank" rel="noopener">#{esc(TAG)}</a></h1>
+<h1><img class="logo" src="favicon.svg" alt=""><a href="{esc(HASHTAG_URL)}" target="_blank" rel="noopener">#{esc(TAG)}</a></h1>
 <div class="controls"><input id="q" type="search" placeholder="タイトル・名前・クレジット・メモで検索">
 <button data-f="all" class="on">すべて</button>
 <button data-f="orig">オリジナル</button>
