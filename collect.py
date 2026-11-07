@@ -253,18 +253,57 @@ def keys_collide(a: dict, b: dict, distinctive: set | None = None,
     return False
 
 
+def name_key(name: str) -> str:
+    """アーティスト名の照合キー（表記ゆれを吸収する）。
+
+    改名や表記ゆれ（絵文字・空白・改行・大文字小文字）を同一視するため、
+    NFKC 正規化して英数・かな・漢字だけを残す。データ側の名前は変更せず、
+    重複照合のときだけ使う。
+    """
+    s = unicodedata.normalize("NFKC", name or "").lower()
+    return re.sub(r"[^0-9a-z぀-ヿ一-鿿]", "", s)
+
+
+def _index_keys(record: dict) -> list:
+    """レコード／アーティスト行を引くための照合キー群。
+
+    名前（正規化）と YouTube チャンネル URL の2系統。改名した人は
+    名前が変わってもチャンネル URL が同じため、旧名義の曲も引ける。
+    """
+    keys = []
+    nk = name_key(record.get("name", ""))
+    if nk:
+        keys.append(("n", nk))
+    url = (record.get("youtube_url") or "").strip()
+    if url:
+        keys.append(("u", url))
+    return keys
+
+
 def build_registered_index(musics: list[dict]) -> dict:
-    """アーティスト名 -> [(キー群, レコード)] の重複照合インデックス。"""
-    index: dict[str, list] = {}
+    """照合キー -> [(キー群, レコード)] の重複照合インデックス。"""
+    index: dict[tuple, list] = {}
     for m in musics:
         if m.get("video_id") and m.get("title"):
-            index.setdefault(m.get("name", ""), []).append((title_keys(m["title"]), m))
+            pair = (title_keys(m["title"]), m)
+            for k in _index_keys(m):
+                index.setdefault(k, []).append(pair)
     return index
 
 
-def find_duplicate(index: dict, name: str, title: str):
-    """同一アーティストの登録済み曲に同一タイトルがあれば、そのレコードを返す。"""
-    records = index.get(name, [])
+def find_duplicate(index: dict, artist: dict, title: str):
+    """同一アーティストの登録済み曲に同一タイトルがあれば、そのレコードを返す。
+
+    artist は artists.csv の行。名前（正規化）とチャンネル URL の
+    どちらかで一致した登録曲をまとめて照合相手にする。
+    """
+    records, seen = [], set()
+    for k in _index_keys(artist):
+        for pair in index.get(k, []):
+            vid = pair[1].get("video_id")
+            if vid not in seen:
+                seen.add(vid)
+                records.append(pair)
     if not records:
         return None
     # そのアーティストの登録曲の1割以下にしか現れない語を distinctive とする
@@ -406,7 +445,7 @@ def main() -> int:
                 # ある新規動画は、再アップロード等の可能性があるため要確認へ。
                 # 既に登録済みの同一動画は対象外。
                 if verdict == "adopt" and vid not in by_id:
-                    dup = find_duplicate(registered, artist.get("name", ""), title)
+                    dup = find_duplicate(registered, artist, title)
                     if dup is not None:
                         verdict = "review"
                         reason = (f"重複候補（同一タイトルの登録済み: "
@@ -427,8 +466,9 @@ def main() -> int:
                     adopted.append(entry)
                     # 今回採用した動画も照合対象に加え、同一実行内での
                     # 重複アップロード（2本目以降）を重複候補に回す
-                    registered.setdefault(entry["name"], []).append(
-                        (title_keys(title), entry))
+                    for k in _index_keys(entry):
+                        registered.setdefault(k, []).append(
+                            (title_keys(title), entry))
                 elif verdict == "review":
                     if vid in pending_ids:
                         pass  # すでに要確認に出ている（再掲しない）
