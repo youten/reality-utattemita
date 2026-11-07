@@ -291,6 +291,28 @@ def build_registered_index(musics: list[dict]) -> dict:
     return index
 
 
+# ショート動画の採用条件（2026-11-07 ようてんの方針）:
+# 基本的には長めの尺の歌ってみたを集めるため、ショート動画は
+# タイトルに「歌ってみた」系の語があり、かつ同一タイトルの登録済み曲が
+# 無い場合だけ自動採用する。同一タイトルの有無は重複候補チェックが
+# 担うので、ここでは尺とタイトルの目印だけを見る。
+SHORT_SECONDS = 60
+SHORT_TITLE_RE = re.compile(r"ショート|#?shorts", re.I)
+UTATTEMITA_RE = re.compile(r"歌ってみた|唄ってみた|うたってみた")
+
+
+def is_short_form(meta: dict, title: str) -> bool:
+    """ショート動画かどうか。尺が60秒以下、またはタイトルに目印がある。"""
+    d = meta.get("duration_seconds")
+    if d and d <= SHORT_SECONDS:
+        return True
+    return bool(SHORT_TITLE_RE.search(title or ""))
+
+
+def has_utattemita_word(title: str) -> bool:
+    return bool(UTATTEMITA_RE.search(title or ""))
+
+
 def find_duplicate(index: dict, artist: dict, title: str):
     """同一アーティストの登録済み曲に同一タイトルがあれば、そのレコードを返す。
 
@@ -452,6 +474,15 @@ def main() -> int:
                                   f"{dup.get('title', '')} / {dup.get('publish_date', '')}）")
                         if not orig_flag:
                             orig_flag = "1" if is_original_candidate(title) else ""
+                # ショート動画は、タイトルに「歌ってみた」系の語が無いものを
+                # 自動採用しない（同一タイトルの登録済み曲がある場合は
+                # 上の重複候補チェックで要確認になっている）
+                if verdict == "adopt" and is_short_form(meta, title) \
+                        and not has_utattemita_word(title):
+                    verdict = "review"
+                    reason = "ショート動画（タイトルに「歌ってみた」なし）"
+                    if not orig_flag:
+                        orig_flag = "1" if is_original_candidate(title) else ""
                 entry = {
                     "video_id": vid, "title": title, "publish_date": pub_date,
                     "name": artist.get("name", ""), "reality_url": artist.get("reality_url", ""),
