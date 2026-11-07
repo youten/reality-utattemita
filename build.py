@@ -214,7 +214,7 @@ white-space:nowrap}
 .ic:hover{opacity:1;transform:scale(1.12)}
 .ic svg{width:20px;height:20px;display:block}
 .memo{font-size:12.5px;line-height:1.55;color:#c9c9d4;background:rgba(255,255,255,.04);
-border-left:3px solid var(--accent);border-radius:6px;padding:8px 10px}
+border-radius:6px;padding:8px 10px}
 .info-btn{background:none;border:0;padding:0;margin-left:9px;cursor:pointer;color:var(--muted);vertical-align:-3px}
 .info-btn:hover{color:var(--accent)}
 .info-btn svg{display:block;width:17px;height:17px}
