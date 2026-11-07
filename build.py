@@ -174,7 +174,7 @@ background:var(--bg);color:var(--text);margin:0}
 header{position:sticky;top:0;z-index:10;background:rgba(13,13,18,.88);
 backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:14px 20px 10px}
 h1{font-size:21px;margin:0 0 10px;letter-spacing:.02em}
-h1 .logo{width:30px;height:30px;vertical-align:-8px;margin-right:9px}
+h1 .logo{width:1em;height:1em;vertical-align:-.14em;margin-right:.22em}
 h1 a{color:var(--text);text-decoration:none}
 h1 a:hover{color:var(--accent)}
 .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
