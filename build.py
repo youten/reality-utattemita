@@ -248,6 +248,17 @@ def render_index(merged: list[dict]) -> str:
     return f"""<!DOCTYPE html>
 <html lang="ja"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="REALITYユーザーの歌ってみたYouTube動画を集めたリスト">
+<meta property="og:type" content="website">
+<meta property="og:title" content="#{esc(TAG)}">
+<meta property="og:description" content="REALITYユーザーの歌ってみたYouTube動画を集めたリスト">
+<meta property="og:url" content="https://youten.github.io/reality-utattemita/">
+<meta property="og:image" content="https://youten.github.io/reality-utattemita/ogp.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@youten_redo">
+<meta name="twitter:title" content="#{esc(TAG)}">
+<meta name="twitter:description" content="REALITYユーザーの歌ってみたYouTube動画を集めたリスト">
+<meta name="twitter:image" content="https://youten.github.io/reality-utattemita/ogp.png">
 <title>#{esc(TAG)}</title><style>{PAGE_CSS}</style></head>
 <body>
 {SPRITE}
