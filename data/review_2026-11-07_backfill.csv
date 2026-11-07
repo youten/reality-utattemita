@@ -1,9 +1,9 @@
 video_id,title_hint,artist,publish_date,source,verdict,reason,original_candidate,decision
-NUH6K9RmgEk,〖カラオケ動画〗ハートマーク　～ あなたにシェア～,桃空ねね,2026/08/15,channel,review,採用語・除外語なし,,
-wlYoMY3mZOY,〖カラオケ動画〗ハロー世界！わたし参上！,桃空ねね,2026/08/15,channel,review,採用語・除外語なし,,
+NUH6K9RmgEk,〖カラオケ動画〗ハートマーク　～ あなたにシェア～,桃空ねね,2026/08/15,channel,review,採用語・除外語なし,,exclude
+wlYoMY3mZOY,〖カラオケ動画〗ハロー世界！わたし参上！,桃空ねね,2026/08/15,channel,review,採用語・除外語なし,,exclude
 6_3BgWxufxs,ギュッとしてサマーラブ♡,桃空ねね,2026/07/20,channel,review,採用語・除外語なし,,include
 TUODLZEFTTs,ハートマーク　～あなたにシェア ～,桃空ねね,2026/05/13,channel,review,採用語・除外語なし,,include
 0iuGrEQKZ48,ハロー世界！わたし参上！,桃空ねね,2026/05/12,channel,review,採用語・除外語なし,,include
-7H5M4FADhRI,#金クマ#reality#ガチャ大好き,桃空ねね,2026/01/25,channel,review,採用語・除外語なし,,
-d9G_p0vCdos,〖カラオケ〗ごきげんスマイル！,桃空ねね,2025/12/10,channel,review,採用語・除外語なし,,
+7H5M4FADhRI,#金クマ#reality#ガチャ大好き,桃空ねね,2026/01/25,channel,review,採用語・除外語なし,,exclude
+d9G_p0vCdos,〖カラオケ〗ごきげんスマイル！,桃空ねね,2025/12/10,channel,review,採用語・除外語なし,,exclude
 K1Mb51Fq5fM,ごきげんスマイル！,桃空ねね,2025/11/14,channel,review,採用語・除外語なし,,include
