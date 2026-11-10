@@ -390,6 +390,10 @@ def main() -> int:
     cutoff = None if args.backfill else (
         datetime.now(timezone.utc) - timedelta(days=args.days))
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    # register_date（リストへの追加日）は JST 基準にする。実行が遅延して
+    # JST 早朝に走った場合に UTC 日付で前日になるのを防ぐ（2026-11-10）。
+    # review ファイル名は従来どおり today（UTC）を使う。
+    today_jst = datetime.now(timezone(timedelta(hours=9))).strftime("%Y-%m-%d")
 
     adopted, review_rows, held, skipped = [], [], [], 0
     suppressed, review_entries = 0, []
@@ -489,7 +493,7 @@ def main() -> int:
                     "twitter_url": artist.get("twitter_url", ""),
                     "youtube_url": artist.get("youtube_url", ""),
                     "watch_url": f"https://www.youtube.com/watch?v={vid}",
-                    "register_date": today.replace("-", "/"),
+                    "register_date": today_jst.replace("-", "/"),
                     "source": kind or "channel",
                     "decision": verdict, "decision_reason": reason,
                 }

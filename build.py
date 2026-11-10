@@ -13,6 +13,8 @@ GitHub Pages 用の docs/index.html を作る。
 - credit と note はカード内に「credit、改行、note」の順で表示する
 - REALITY / X / YouTube へのリンクはアイコンで表示する
 - レイアウトは PC 3ペイン／スマホ 1ペイン、サムネイルは大きめ（hqdefault）
+- 並び替えトグル（公開日順／追加日順）。追加日は musics.json の register_date
+  を使い、追加日順のときだけカードに「追加 日付」を表示する（2026-11-10 追加）
 
 使い方: python3 build.py [--out docs]
 確認:  python3 build.py --out /tmp/utattemita-preview
@@ -151,7 +153,9 @@ def card_html(item: dict) -> str:
     return (
         f'<article class="card" data-text="{esc(search_text)}" '
         f'data-o="{1 if item.get("original") == "1" else 0}" '
-        f'data-p="{1 if item.get("provided") == "1" else 0}">'
+        f'data-p="{1 if item.get("provided") == "1" else 0}" '
+        f'data-pub="{esc(item.get("publish_date", ""))}" '
+        f'data-reg="{esc(item.get("register_date", ""))}">'
         f'<a class="thumb" href="{watch}" target="_blank" rel="noopener">'
         f'<img loading="lazy" src="{thumb(vid)}" alt=""></a>'
         f'<div class="body">'
@@ -160,7 +164,9 @@ def card_html(item: dict) -> str:
         + (f'<div class="badges">{" ".join(badges)}</div>' if badges else "")
         + f'<div class="meta"><span class="name">{esc(item.get("name", ""))}</span>'
         f'<span class="date">{esc(item.get("publish_date", ""))}</span>'
-        f'<span class="icons">{"".join(icons)}</span></div>'
+        + (f'<span class="reg">追加 {esc(item.get("register_date", ""))}</span>'
+           if item.get("register_date") else "")
+        + f'<span class="icons">{"".join(icons)}</span></div>'
         f"{memo}</div></article>"
     )
 
@@ -184,6 +190,9 @@ background:#1e1e28;border:1px solid var(--line);border-radius:999px;color:var(--
 background:transparent;border:1px solid var(--line);color:var(--muted)}
 .controls button.on{background:var(--accent);border-color:var(--accent);color:#17102b;font-weight:700}
 #count{color:var(--muted);font-size:13px;margin-left:4px}
+.controls .sort-label{color:var(--muted);font-size:13px;margin-left:10px}
+.meta .reg{display:none;white-space:nowrap;color:var(--accent)}
+body.sort-reg .meta .reg{display:inline}
 main{max-width:1280px;margin:0 auto;padding:20px}
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 @media(max-width:1020px){.grid{grid-template-columns:repeat(2,1fr)}}
@@ -247,6 +256,30 @@ for(const b of document.querySelectorAll('[data-f]')){
     apply();
   });
 }
+const grid=document.querySelector('.grid');
+cards.forEach((c,i)=>c.dataset.i=i);
+function dkey(v){const p=(v||'').split('/').map(Number);
+  return (p[0]||0)*10000+(p[1]||0)*100+(p[2]||0);}
+let s='pub';
+function sortCards(){
+  const sorted=[...cards].sort((a,b)=>{
+    if(s==='reg'){
+      return dkey(b.dataset.reg)-dkey(a.dataset.reg)
+        || dkey(b.dataset.pub)-dkey(a.dataset.pub)
+        || a.dataset.i-b.dataset.i;
+    }
+    return a.dataset.i-b.dataset.i;
+  });
+  for(const c of sorted)grid.appendChild(c);
+  document.body.classList.toggle('sort-reg',s==='reg');
+}
+for(const b of document.querySelectorAll('[data-s]')){
+  b.addEventListener('click',()=>{
+    s=b.dataset.s;
+    for(const x of document.querySelectorAll('[data-s]'))x.classList.toggle('on',x===b);
+    sortCards();
+  });
+}
 apply();
 const dlg=document.getElementById('about');
 document.getElementById('about-open').addEventListener('click',()=>dlg.showModal());
@@ -283,6 +316,9 @@ def render_index(merged: list[dict]) -> str:
 <button data-f="all" class="on">すべて</button>
 <button data-f="orig">オリジナル</button>
 <button data-f="prov">楽曲提供</button>
+<span class="sort-label">並び替え</span>
+<button data-s="pub" class="on">公開日順</button>
+<button data-s="reg">追加日順</button>
 <span id="count"></span></div>
 </header>
 <main><div class="grid">
