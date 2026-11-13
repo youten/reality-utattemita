@@ -523,8 +523,13 @@ def main() -> int:
             by_id[e["video_id"]] = e
             added += 1
         else:
+            # register_date は「最初にリストへ追加された日」として保持する。
+            # 再取得のたびに上書きすると追加日順の並びが壊れるため、
+            # note / original と同様、既存値がある場合は上書きしない
+            # （2026-11-14 修正。過去分の復元も同日に実施）。
             old.update({k: v for k, v in e.items()
-                        if k not in ("note", "original") or not old.get(k)})
+                        if k not in ("note", "original", "register_date")
+                        or not old.get(k)})
     merged = sorted(by_id.values(), key=lambda m: (m.get("publish_date") or "", m.get("no", 0)),
                     reverse=True)
     for i, m in enumerate(merged, 1):
