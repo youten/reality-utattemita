@@ -291,14 +291,13 @@ def build_registered_index(musics: list[dict]) -> dict:
     return index
 
 
-# ショート動画の採用条件（2026-11-07 ようてんの方針）:
-# 基本的には長めの尺の歌ってみたを集めるため、ショート動画は
-# タイトルに「歌ってみた」系の語があり、かつ同一タイトルの登録済み曲が
-# 無い場合だけ自動採用する。同一タイトルの有無は重複候補チェックが
-# 担うので、ここでは尺とタイトルの目印だけを見る。
+# ショート動画の扱い（2026-11-15 ようてんの方針で改定）:
+# ショート動画は原則としてリストに入れない。自動採用はせず、
+# 理由を付けて全て要確認へ回す（例外的に入れたいものだけ review で
+# include と判断する）。2026-11-07 の旧方針（タイトルに「歌ってみた」が
+# あり同一タイトルの登録済み曲が無いショートは自動採用）は廃止。
 SHORT_SECONDS = 60
 SHORT_TITLE_RE = re.compile(r"ショート|#?shorts", re.I)
-UTATTEMITA_RE = re.compile(r"歌ってみた|唄ってみた|うたってみた")
 
 
 def is_short_form(meta: dict, title: str) -> bool:
@@ -307,10 +306,6 @@ def is_short_form(meta: dict, title: str) -> bool:
     if d and d <= SHORT_SECONDS:
         return True
     return bool(SHORT_TITLE_RE.search(title or ""))
-
-
-def has_utattemita_word(title: str) -> bool:
-    return bool(UTATTEMITA_RE.search(title or ""))
 
 
 def find_duplicate(index: dict, artist: dict, title: str):
@@ -478,13 +473,12 @@ def main() -> int:
                                   f"{dup.get('title', '')} / {dup.get('publish_date', '')}）")
                         if not orig_flag:
                             orig_flag = "1" if is_original_candidate(title) else ""
-                # ショート動画は、タイトルに「歌ってみた」系の語が無いものを
-                # 自動採用しない（同一タイトルの登録済み曲がある場合は
-                # 上の重複候補チェックで要確認になっている）
-                if verdict == "adopt" and is_short_form(meta, title) \
-                        and not has_utattemita_word(title):
+                # ショート動画は原則リスト対象外のため、自動採用せず
+                # 全て要確認へ回す（2026-11-15 方針改定。タイトルに
+                # 「歌ってみた」があっても例外にしない）
+                if verdict == "adopt" and is_short_form(meta, title):
                     verdict = "review"
-                    reason = "ショート動画（タイトルに「歌ってみた」なし）"
+                    reason = "ショート動画（原則リスト対象外）"
                     if not orig_flag:
                         orig_flag = "1" if is_original_candidate(title) else ""
                 entry = {
