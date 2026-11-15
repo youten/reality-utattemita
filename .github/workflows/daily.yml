@@ -1,5 +1,5 @@
 # #REALITY歌ってみたYouTubeリスト 日次収集＋台帳同期＋HTML生成
-# 毎日22:00 JST に sync.py → collect.py → sync.py → build.py を実行し、
+# 毎日03:03 JST に sync.py → collect.py → sync.py → build.py を実行し、
 # 変化があれば自動commitする。
 # 台帳同期（sync.py）は review の判断（include / exclude）の取り込みと
 # 台帳（annotations.csv）の整備。APIキー不要で、収集前後どちらでも回る。
@@ -10,7 +10,9 @@ name: daily-collect
 
 on:
   schedule:
-    - cron: "17 13 * * *"  # 22:17 JST
+    - cron: "3 18 * * *"  # 03:03 JST（2026-11-15 変更。GitHub の schedule は
+    # 数時間遅れるのが常態で、収集は過去14日分を見るため 1〜2日ずれても
+    # 問題ない前提で未明に置く。変更前は 22:17 JST）
   workflow_dispatch:
     inputs:
       days:
