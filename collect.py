@@ -17,8 +17,9 @@ Videos.list で補足情報（長さ・カテゴリ・タグ・配信状態）�
                 data/review_YYYY-MM-DD.csv（要確認。decision 欄つき）、
                 data/candidates.json（要確認の曲情報の控え。昇格用）、
                 data/excluded.json（恒久除外の video_id 一覧。読むだけ）
-  - 恒久除外（excluded.json）と保留中（candidates.json のキー）の動画は
-    再掲しない。review の判断取り込みと台帳の整備は sync.py の担当。
+  - 恒久除外（excluded.json）と保留中（candidates.json のキー）と
+    登録済み（musics.json）の動画は再掲しない。review の判断取り込みと
+    台帳の整備は sync.py の担当。
 
 使い方:
   YOUTUBE_API_KEY=... python3 collect.py [--days 14] [--backfill]
@@ -450,6 +451,10 @@ def main() -> int:
                 if vid in excluded_ids:
                     suppressed += 1
                     continue  # 恒久除外（review で exclude 済み／台帳から削除済み）
+                if vid in by_id:
+                    continue  # 登録済み（musics.json にある）は再掲しない。
+                    # 昇格で candidates から消えた動画が、14日窓の間は
+                    # 要確認に再掲されてしまうのを防ぐ（2026-11-23 追加）
                 if meta.get("live_broadcast_content") in ("upcoming", "live"):
                     held.append((vid, title, artist.get("name", ""), pub_date,
                                  meta["live_broadcast_content"]))
