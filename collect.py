@@ -529,7 +529,10 @@ def main() -> int:
             old.update({k: v for k, v in e.items()
                         if k not in ("note", "original", "register_date")
                         or not old.get(k)})
-    merged = sorted(by_id.values(), key=lambda m: (m.get("publish_date") or "", m.get("no", 0)),
+    # 同じ公開日の曲どうしの順序はファイルの既存順を保つ（安定ソート）。
+    # no をキーに含めると収集のたびに同日グループの順序が反転してしまい、
+    # 手で並び替えた順序（例：アルバムのトラック順）が崩れる（2026-11-23 変更）
+    merged = sorted(by_id.values(), key=lambda m: m.get("publish_date") or "",
                     reverse=True)
     for i, m in enumerate(merged, 1):
         m["no"] = i

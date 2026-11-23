@@ -188,8 +188,9 @@ def main() -> int:
         write_annotations(ann_path, rows)
 
     if musics_dirty:
+        # collect.py と同じく、同じ公開日の曲どうしの順序は既存順を保つ
         merged = sorted(by_id.values(),
-                        key=lambda m: (m.get("publish_date") or "", m.get("no", 0)),
+                        key=lambda m: m.get("publish_date") or "",
                         reverse=True)
         for i, m in enumerate(merged, 1):
             m["no"] = i
