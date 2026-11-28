@@ -1,1 +1,44 @@
-{}
+{
+ "EPV_UwgNiPs": {
+  "decision": "review",
+  "decision_reason": "採用語・除外語なし",
+  "name": "pomme",
+  "publish_date": "2026/11/27",
+  "reality_url": "https://reality.app/profile/8dd44df7",
+  "register_date": "2026/11/28",
+  "source": "channel",
+  "title": "× / pomme (short ver.)　#pomme",
+  "twitter_url": "https://twitter.com/pomme_music",
+  "video_id": "EPV_UwgNiPs",
+  "watch_url": "https://www.youtube.com/watch?v=EPV_UwgNiPs",
+  "youtube_url": "https://www.youtube.com/channel/UCHbcYGutgkslZswhRiF-ykw"
+ },
+ "EpabbVmKxrM": {
+  "decision": "review",
+  "decision_reason": "重複候補（同一タイトルの登録済み: 淡い記憶 / pomme  (Music Video) / 2024/08/19）",
+  "name": "pomme",
+  "publish_date": "2026/11/27",
+  "reality_url": "https://reality.app/profile/8dd44df7",
+  "register_date": "2026/11/28",
+  "source": "channel",
+  "title": "× / pomme (Music Video)",
+  "twitter_url": "https://twitter.com/pomme_music",
+  "video_id": "EpabbVmKxrM",
+  "watch_url": "https://www.youtube.com/watch?v=EpabbVmKxrM",
+  "youtube_url": "https://www.youtube.com/channel/UCHbcYGutgkslZswhRiF-ykw"
+ },
+ "Zpd7tu01Xmc": {
+  "decision": "review",
+  "decision_reason": "ショート動画（原則リスト対象外）",
+  "name": "Byakuya's Room(深青白夜)",
+  "publish_date": "2026/11/27",
+  "reality_url": "https://reality.app/profile/b2cd46d4",
+  "register_date": "2026/11/28",
+  "source": "channel",
+  "title": "【#魔法使いの夜】夜と青を歌ってみた",
+  "twitter_url": "https://twitter.com/byakuya_reality",
+  "video_id": "Zpd7tu01Xmc",
+  "watch_url": "https://www.youtube.com/watch?v=Zpd7tu01Xmc",
+  "youtube_url": "https://www.youtube.com/channel/UCeJE9tLMoOeLzL7Dz7QKb8w"
+ }
+}
